@@ -1,8 +1,8 @@
 const CACHE = 'newt-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
+  '/newt/',
+  '/newt/index.html',
+  '/newt/manifest.json',
 ];
 
 self.addEventListener('install', e => {
