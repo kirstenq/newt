@@ -2,4 +2,4 @@
 // Add your Anthropic API key below.
 // Get one at: https://console.anthropic.com
 
-window.NEWT_API_KEY = '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';
+window.NEWT_API_KEY = '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';
