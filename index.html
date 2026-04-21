@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#f88505" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Newt" />
+<title>Newt</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --orange-light: #faab42;
+    --orange-mid: #f88505;
+    --orange-dark: #ef6301;
+    --green-light: #84b051;
+    --green-dark: #537d33;
+    --green-bg: #f3f8ec;
+    --green-border: #84b051;
+    --bg: #ffffff;
+    --bg-secondary: #f7f7f5;
+    --bg-tertiary: #efefec;
+    --text-primary: #1a1a18;
+    --text-secondary: #5a5a52;
+    --text-tertiary: #9a9a8f;
+    --border: rgba(0,0,0,0.1);
+    --border-med: rgba(0,0,0,0.15);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --font: 'Nunito', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    font-family: var(--font);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    overscroll-behavior: none;
+  }
+
+  #app {
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 52px 20px 12px;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-logo {
+    height: 30px;
+    width: auto;
+  }
+  .topbar-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border-med);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: var(--bg-tertiary); }
+  .icon-btn svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── INPUT BAR ── */
+  .input-bar {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+  .pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    gap: 6px;
+    min-width: 0;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .pill:active { background: var(--bg-tertiary); }
+  .pill.satisfied { border-color: var(--green-border); background: var(--green-bg); }
+  .pill-inner { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+  .pill-label { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary); }
+  .pill.satisfied .pill-label { color: var(--green-dark); }
+  .pill-value { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill.satisfied .pill-value { color: var(--green-dark); }
+  .pill-chevron svg { width: 13px; height: 13px; stroke: var(--text-tertiary); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .pill.satisfied .pill-chevron svg { stroke: var(--green-light); }
+
+  .food-icons { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding-top: 1px; }
+  .food-icon-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 3px; border-radius: 6px; }
+  .food-icon-btn svg { width: 19px; height: 19px; stroke: var(--text-secondary); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s; }
+  .food-icon-btn:active svg, .food-icon-btn.active svg { stroke: var(--green-dark); }
+  .divider-v { width: 0.5px; height: 18px; background: var(--border-med); }
+
+  /* ── OUTPUT AREA ── */
+  .output-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 14px;
+    color: var(--text-tertiary);
+    text-align: center;
+  }
+  .empty-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 1.5px dashed var(--border-med);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .empty-icon svg { width: 24px; height: 24px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .empty-state p { font-size: 14px; line-height: 1.6; max-width: 220px; color: var(--text-tertiary); }
+
+  .loading-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 16px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2.5px solid var(--bg-tertiary);
+    border-top-color: var(--orange-mid);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-state p { font-size: 14px; color: var(--text-secondary); }
+
+  .result-area { display: none; }
+
+  /* Result components */
+  .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .result-title { font-size: 16px; font-weight: 700; color: var(--text-primary); flex: 1; margin-right: 10px; }
+  .result-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 99px; background: var(--green-bg);
+    color: var(--green-dark); border: 0.5px solid var(--green-border);
+    white-space: nowrap; flex-shrink: 0;
+  }
+
+  .score-wrap { margin-bottom: 20px; }
+  .score-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 7px; font-weight: 600; }
+  .score-num { color: var(--green-dark); }
+  .bar-bg { height: 7px; border-radius: 99px; background: var(--bg-tertiary); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--green-light), var(--green-dark)); transition: width 0.7s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+
+  .checklist { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .check-row { display: flex; align-items: flex-start; gap: 10px; }
+  .check-circle {
+    width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .check-circle.yes { background: var(--green-bg); border: 1px solid var(--green-border); }
+  .check-circle.no { background: var(--bg-secondary); border: 0.5px solid var(--border-med); }
+  .check-circle svg { width: 11px; height: 11px; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .check-circle.yes svg { stroke: var(--green-dark); }
+  .check-circle.no svg { stroke: var(--text-tertiary); }
+  .check-text { font-size: 14px; line-height: 1.4; }
+  .check-text.yes { color: var(--text-primary); }
+  .check-text.no { color: var(--text-tertiary); }
+  .check-note { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .top3 { display: flex; flex-direction: column; gap: 12px; }
+  .top3-card {
+    background: var(--bg-secondary); border: 0.5px solid var(--border);
+    border-radius: var(--radius-md); padding: 14px;
+  }
+  .top3-rank { font-size: 11px; font-weight: 600; color: var(--orange-mid); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .top3-name { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+  .top3-reasoning { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--green-bg); color: var(--green-dark); border: 0.5px solid var(--green-border); }
+
+  .result-summary {
+    background: var(--bg-secondary); border-radius: var(--radius-md);
+    padding: 14px; margin-bottom: 20px; font-size: 13px;
+    color: var(--text-secondary); line-height: 1.6;
+    border: 0.5px solid var(--border);
+  }
+
+  .error-state {
+    display: none; background: #fff5f5; border: 0.5px solid #fca5a5;
+    border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;
+    font-size: 13px; color: #dc2626; line-height: 1.5;
+  }
+
+  /* ── ANALYZE BUTTON ── */
+  .analyze-row { padding: 10px 16px 28px; border-top: 0.5px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .analyze-btn {
+    width: 100%; padding: 14px;
+    border-radius: var(--radius-md); border: none;
+    font-family: var(--font); font-size: 15px; font-weight: 700;
+    cursor: not-allowed; transition: opacity 0.2s, transform 0.1s;
+    background: var(--bg-tertiary); color: var(--text-tertiary);
+  }
+  .analyze-btn.ready {
+    background: linear-gradient(90deg, var(--orange-light), var(--orange-mid), var(--orange-dark));
+    color: #fff; cursor: pointer;
+  }
+  .analyze-btn.ready:active { transform: scale(0.98); opacity: 0.9; }
+  .analyze-btn.loading { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100;
+    display: none; align-items: flex-end;
+    border-radius: inherit;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg); border-radius: 20px 20px 0 0;
+    width: 100%; padding: 20px 20px 36px;
+    border-top: 0.5px solid var(--border);
+  }
+  .modal-handle { width: 36px; height: 4px; border-radius: 99px; background: var(--border-med); margin: 0 auto 18px; }
+  .modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+  .option-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 0.5px solid var(--border); cursor: pointer;
+  }
+  .option-row:last-of-type { border-bottom: none; }
+  .option-left { display: flex; flex-direction: column; gap: 3px; }
+  .option-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .option-desc { font-size: 12px; color: var(--text-tertiary); }
+  .radio { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border-med); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.15s, background 0.15s; }
+  .radio.selected { border-color: var(--orange-mid); background: #fff8ee; }
+  .radio-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--orange-mid); }
+  .modal-close {
+    width: 100%; margin-top: 18px; padding: 13px;
+    border-radius: var(--radius-md); border: 0.5px solid var(--border-med);
+    background: var(--bg-secondary); font-family: var(--font);
+    font-size: 15px; font-weight: 600; color: var(--text-primary); cursor: pointer;
+  }
+  .modal-close:active { background: var(--bg-tertiary); }
+
+  /* ── URL INPUT MODAL ── */
+  .url-input {
+    width: 100%; padding: 12px 14px; border-radius: var(--radius-md);
+    border: 1px solid var(--border-med); font-family: var(--font);
+    font-size: 15px; color: var(--text-primary); background: var(--bg-secondary);
+    margin-bottom: 12px; outline: none;
+  }
+  .url-input:focus { border-color: var(--orange-mid); background: #fff8ee; }
+  .url-submit {
+    width: 100%; padding: 13px; border-radius: var(--radius-md); border: none;
+    background: linear-gradient(90deg, var(--orange-light), var(--orange-mid), var(--orange-dark));
+    color: #fff; font-family: var(--font); font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .url-submit:active { opacity: 0.9; }
+
+  /* ── PROFILE SCREEN ── */
+  .profile-scroll { flex: 1; overflow-y: auto; padding: 20px 16px; -webkit-overflow-scrolling: touch; }
+  .profile-section { margin-bottom: 28px; }
+  .profile-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px; }
+  .profile-field { margin-bottom: 14px; }
+  .profile-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .profile-input {
+    width: 100%; padding: 11px 13px; border-radius: var(--radius-md);
+    border: 1px solid var(--border-med); font-family: var(--font);
+    font-size: 14px; color: var(--text-primary); background: var(--bg-secondary); outline: none;
+  }
+  .profile-input:focus { border-color: var(--orange-mid); background: #fff8ee; }
+  .profile-select {
+    width: 100%; padding: 11px 13px; border-radius: var(--radius-md);
+    border: 1px solid var(--border-med); font-family: var(--font);
+    font-size: 14px; color: var(--text-primary); background: var(--bg-secondary);
+    outline: none; appearance: none; cursor: pointer;
+  }
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 13px; border-radius: 99px; border: 1px solid var(--border-med);
+    font-family: var(--font); font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); background: var(--bg-secondary); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip.active { background: var(--green-bg); border-color: var(--green-border); color: var(--green-dark); }
+  .chip:active { transform: scale(0.97); }
+  .save-btn {
+    width: 100%; padding: 14px; border-radius: var(--radius-md); border: none;
+    background: linear-gradient(90deg, var(--orange-light), var(--orange-mid), var(--orange-dark));
+    color: #fff; font-family: var(--font); font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-bottom: 32px;
+  }
+  .save-btn:active { opacity: 0.9; transform: scale(0.99); }
+  .save-confirm {
+    text-align: center; font-size: 13px; color: var(--green-dark);
+    font-weight: 600; display: none; margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ MAIN SCREEN ══ -->
+  <div class="screen active" id="screen-main">
+    <div class="topbar">
+      <span style="font-size:22px;font-weight:800;color:var(--orange-mid);letter-spacing:-0.5px;">newt</span>
+      <div class="icon-btn" onclick="showScreen('screen-profile')" title="Profile">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="pill satisfied" id="criteriaPill" onclick="openCriteriaModal()">
+        <div class="pill-inner">
+          <span class="pill-label">Criteria</span>
+          <span class="pill-value" id="criteriaValue">The Daily Dozen</span>
+        </div>
+        <div class="pill-chevron">
+          <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="pill" id="foodPill">
+        <div class="pill-inner">
+          <span class="pill-label">Food</span>
+          <div class="food-icons">
+            <div class="food-icon-btn" id="btn-file" title="Upload file" onclick="triggerFileUpload()">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </div>
+            <div class="divider-v"></div>
+            <div class="food-icon-btn" id="btn-link" title="Paste link" onclick="openUrlModal()">
+              <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <div class="divider-v"></div>
+            <div class="food-icon-btn" id="btn-camera" title="Use camera" onclick="triggerCamera()">
+              <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="output-area" id="outputArea">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <p>Choose your criteria and add a meal, menu, or recipe link above.</p>
+      </div>
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p id="loadingMsg">Analyzing your food…</p>
+      </div>
+      <div class="error-state" id="errorState"></div>
+      <div class="result-area" id="resultArea"></div>
+    </div>
+
+    <div class="analyze-row">
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">Analyze</button>
+    </div>
+  </div>
+
+  <!-- ══ PROFILE SCREEN ══ -->
+  <div class="screen" id="screen-profile">
+    <div class="topbar">
+      <div class="icon-btn" onclick="showScreen('screen-main')" title="Back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <span class="topbar-title">My profile</span>
+      <div style="width:34px"></div>
+    </div>
+    <div class="profile-scroll">
+      <div class="profile-section">
+        <div class="profile-section-title">About you</div>
+        <div class="profile-field">
+          <div class="profile-label">Name</div>
+          <input class="profile-input" id="p-name" type="text" placeholder="Your name" />
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Age</div>
+          <input class="profile-input" id="p-age" type="number" placeholder="e.g. 34" min="1" max="120" />
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Biological sex</div>
+          <select class="profile-select" id="p-sex">
+            <option value="">Prefer not to say</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">Health goals</div>
+        <div class="profile-field">
+          <div class="profile-label">Primary goal</div>
+          <select class="profile-select" id="p-goal">
+            <option value="">No specific goal</option>
+            <option value="weight_loss">Weight management</option>
+            <option value="heart_health">Heart health</option>
+            <option value="energy">More energy</option>
+            <option value="longevity">Longevity</option>
+            <option value="athletic">Athletic performance</option>
+            <option value="gut_health">Gut health</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">Dietary preferences</div>
+        <div class="profile-field">
+          <div class="profile-label">Diet type</div>
+          <select class="profile-select" id="p-diet">
+            <option value="">No restriction</option>
+            <option value="vegan">Vegan</option>
+            <option value="vegetarian">Vegetarian</option>
+            <option value="pescatarian">Pescatarian</option>
+            <option value="keto">Keto</option>
+            <option value="paleo">Paleo</option>
+            <option value="mediterranean">Mediterranean</option>
+            <option value="gluten_free">Gluten-free</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">Allergies & avoid</div>
+        <div class="chip-grid" id="allergyChips">
+          <div class="chip" data-val="dairy" onclick="toggleChip(this)">Dairy</div>
+          <div class="chip" data-val="gluten" onclick="toggleChip(this)">Gluten</div>
+          <div class="chip" data-val="nuts" onclick="toggleChip(this)">Tree nuts</div>
+          <div class="chip" data-val="peanuts" onclick="toggleChip(this)">Peanuts</div>
+          <div class="chip" data-val="shellfish" onclick="toggleChip(this)">Shellfish</div>
+          <div class="chip" data-val="soy" onclick="toggleChip(this)">Soy</div>
+          <div class="chip" data-val="eggs" onclick="toggleChip(this)">Eggs</div>
+          <div class="chip" data-val="fish" onclick="toggleChip(this)">Fish</div>
+          <div class="chip" data-val="red_meat" onclick="toggleChip(this)">Red meat</div>
+          <div class="chip" data-val="processed" onclick="toggleChip(this)">Processed food</div>
+          <div class="chip" data-val="sugar" onclick="toggleChip(this)">Added sugar</div>
+          <div class="chip" data-val="sodium" onclick="toggleChip(this)">High sodium</div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">Nutritional priorities</div>
+        <div class="chip-grid" id="priorityChips">
+          <div class="chip" data-val="protein" onclick="toggleChip(this)">High protein</div>
+          <div class="chip" data-val="fiber" onclick="toggleChip(this)">High fiber</div>
+          <div class="chip" data-val="omega3" onclick="toggleChip(this)">Omega-3s</div>
+          <div class="chip" data-val="antioxidants" onclick="toggleChip(this)">Antioxidants</div>
+          <div class="chip" data-val="low_carb" onclick="toggleChip(this)">Low carb</div>
+          <div class="chip" data-val="low_fat" onclick="toggleChip(this)">Low fat</div>
+          <div class="chip" data-val="iron" onclick="toggleChip(this)">Iron-rich</div>
+          <div class="chip" data-val="calcium" onclick="toggleChip(this)">Calcium</div>
+          <div class="chip" data-val="vitamin_d" onclick="toggleChip(this)">Vitamin D</div>
+          <div class="chip" data-val="b12" onclick="toggleChip(this)">Vitamin B12</div>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="saveProfile()">Save profile</button>
+      <div class="save-confirm" id="saveConfirm">Profile saved!</div>
+    </div>
+  </div>
+
+  <!-- ══ CRITERIA MODAL ══ -->
+  <div class="modal-overlay" id="criteriaModal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Choose criteria</div>
+      <div class="option-row" onclick="selectCriteria('The Daily Dozen')">
+        <div class="option-left">
+          <span class="option-name">The Daily Dozen</span>
+          <span class="option-desc">Dr. Greger's 12 essential daily food groups</span>
+        </div>
+        <div class="radio selected" id="radio-The Daily Dozen"><div class="radio-dot"></div></div>
+      </div>
+      <div class="option-row" onclick="selectCriteria('The MIND Diet')">
+        <div class="option-left">
+          <span class="option-name">The MIND Diet</span>
+          <span class="option-desc">Brain-health focused eating pattern</span>
+        </div>
+        <div class="radio" id="radio-The MIND Diet"></div>
+      </div>
+      <div class="option-row" onclick="selectCriteria('Personalized Profile')">
+        <div class="option-left">
+          <span class="option-name">Personalized profile</span>
+          <span class="option-desc">Based on your saved preferences</span>
+        </div>
+        <div class="radio" id="radio-Personalized Profile"></div>
+      </div>
+      <button class="modal-close" onclick="closeCriteriaModal()">Done</button>
+    </div>
+  </div>
+
+  <!-- ══ URL MODAL ══ -->
+  <div class="modal-overlay" id="urlModal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Paste a link</div>
+      <input class="url-input" id="urlInput" type="url" placeholder="https://..." />
+      <button class="url-submit" onclick="submitUrl()">Use this link</button>
+      <button class="modal-close" onclick="closeUrlModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- hidden file inputs -->
+  <input type="file" id="fileInput" accept="image/*,.pdf" style="display:none" onchange="handleFile(this)" />
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)" />
+</div>
+
+<script>
+const PROXY_URL = 'https://newt-proxy.netlify.app/.netlify/functions/analyze';
+
+let state = {
+  criteria: 'The Daily Dozen',
+  foodMode: null,
+  foodLabel: null,
+  foodData: null,
+  foodType: null,
+  isLoading: false,
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Criteria ──
+function openCriteriaModal() {
+  document.getElementById('criteriaModal').classList.add('open');
+}
+function closeCriteriaModal() {
+  document.getElementById('criteriaModal').classList.remove('open');
+}
+function selectCriteria(name) {
+  state.criteria = name;
+  document.getElementById('criteriaValue').textContent = name;
+  ['The Daily Dozen','The MIND Diet','Personalized Profile'].forEach(n => {
+    const r = document.getElementById('radio-' + n);
+    if (!r) return;
+    r.className = 'radio' + (n === name ? ' selected' : '');
+    r.innerHTML = n === name ? '<div class="radio-dot"></div>' : '';
+  });
+}
+
+// ── Food inputs ──
+function setFoodReady(mode, label) {
+  state.foodMode = mode;
+  state.foodLabel = label;
+  document.querySelectorAll('.food-icon-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + mode).classList.add('active');
+  document.getElementById('foodPill').classList.add('satisfied');
+  const pill = document.getElementById('foodPill');
+  pill.querySelector('.pill-value') && pill.querySelector('.pill-value').remove();
+  const inner = pill.querySelector('.pill-inner');
+  let existing = inner.querySelector('.pill-value');
+  if (!existing) {
+    const v = document.createElement('span');
+    v.className = 'pill-value';
+    inner.insertBefore(v, inner.querySelector('.food-icons'));
+  }
+  inner.querySelector('.pill-value').textContent = label;
+  updateAnalyzeBtn();
+}
+
+function triggerFileUpload() {
+  document.getElementById('fileInput').click();
+}
+function triggerCamera() {
+  document.getElementById('cameraInput').click();
+}
+
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const mode = input.id === 'cameraInput' ? 'camera' : 'file';
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    const base64 = dataUrl.split(',')[1];
+    const mediaType = file.type;
+    state.foodData = { base64, mediaType, name: file.name };
+    state.foodType = mediaType.startsWith('image/') ? 'image' : 'pdf';
+    setFoodReady(mode, file.name.length > 22 ? file.name.slice(0,20)+'…' : file.name);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function openUrlModal() {
+  document.getElementById('urlModal').classList.add('open');
+  setTimeout(() => document.getElementById('urlInput').focus(), 100);
+}
+function closeUrlModal() {
+  document.getElementById('urlModal').classList.remove('open');
+}
+function submitUrl() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  state.foodData = { url };
+  state.foodType = 'url';
+  const display = url.replace(/^https?:\/\//, '').slice(0, 28) + (url.length > 30 ? '…' : '');
+  setFoodReady('link', display);
+  closeUrlModal();
+}
+
+function updateAnalyzeBtn() {
+  const ready = state.foodMode !== null && !state.isLoading;
+  const btn = document.getElementById('analyzeBtn');
+  btn.classList.toggle('ready', ready);
+  btn.classList.toggle('loading', state.isLoading);
+  btn.textContent = state.isLoading ? 'Analyzing…' : 'Analyze';
+}
+
+// ── Profile ──
+function toggleChip(el) {
+  el.classList.toggle('active');
+}
+function saveProfile() {
+  const profile = {
+    name: document.getElementById('p-name').value,
+    age: document.getElementById('p-age').value,
+    sex: document.getElementById('p-sex').value,
+    goal: document.getElementById('p-goal').value,
+    diet: document.getElementById('p-diet').value,
+    allergies: [...document.querySelectorAll('#allergyChips .chip.active')].map(c => c.dataset.val),
+    priorities: [...document.querySelectorAll('#priorityChips .chip.active')].map(c => c.dataset.val),
+  };
+  localStorage.setItem('newt_profile', JSON.stringify(profile));
+  const conf = document.getElementById('saveConfirm');
+  conf.style.display = 'block';
+  setTimeout(() => conf.style.display = 'none', 2000);
+}
+function loadProfile() {
+  const raw = localStorage.getItem('newt_profile');
+  if (!raw) return;
+  try {
+    const p = JSON.parse(raw);
+    if (p.name) document.getElementById('p-name').value = p.name;
+    if (p.age) document.getElementById('p-age').value = p.age;
+    if (p.sex) document.getElementById('p-sex').value = p.sex;
+    if (p.goal) document.getElementById('p-goal').value = p.goal;
+    if (p.diet) document.getElementById('p-diet').value = p.diet;
+    if (p.allergies) p.allergies.forEach(v => {
+      const el = document.querySelector(`#allergyChips [data-val="${v}"]`);
+      if (el) el.classList.add('active');
+    });
+    if (p.priorities) p.priorities.forEach(v => {
+      const el = document.querySelector(`#priorityChips [data-val="${v}"]`);
+      if (el) el.classList.add('active');
+    });
+  } catch(e) {}
+}
+
+// ── Build prompt ──
+function buildCriteriaDescription() {
+  if (state.criteria === 'The Daily Dozen') {
+    return `The Daily Dozen (Dr. Michael Greger): Beans, Berries, Other Fruits, Cruciferous Vegetables, Greens, Other Vegetables, Flaxseeds, Nuts & Seeds, Herbs & Spices, Whole Grains, Beverages (water), Exercise.`;
+  }
+  if (state.criteria === 'The MIND Diet') {
+    return `The MIND Diet (brain-health): Green leafy vegetables (6+ servings/week), Other vegetables (1+/day), Nuts (5+ servings/week), Berries (2+ servings/week), Beans (4+ meals/week), Whole grains (3+ servings/day), Fish (1+ serving/week), Poultry (2+ servings/week), Olive oil as primary oil, Wine (optional, moderate). Limits: red meat, butter/margarine, cheese, pastries/sweets, fried/fast food.`;
+  }
+  if (state.criteria === 'Personalized Profile') {
+    const raw = localStorage.getItem('newt_profile');
+    if (!raw) return 'No personalized profile saved yet. Please set up your profile first.';
+    try {
+      const p = JSON.parse(raw);
+      const parts = [];
+      if (p.goal) parts.push(`Health goal: ${p.goal.replace('_',' ')}`);
+      if (p.diet) parts.push(`Diet: ${p.diet.replace('_','-')}`);
+      if (p.allergies?.length) parts.push(`Avoid: ${p.allergies.join(', ')}`);
+      if (p.priorities?.length) parts.push(`Prioritize: ${p.priorities.join(', ')}`);
+      return parts.length ? parts.join('. ') : 'General healthy eating.';
+    } catch(e) { return 'General healthy eating.'; }
+  }
+  return state.criteria;
+}
+
+// ── Analyze ──
+async function analyze() {
+  if (!state.foodMode || state.isLoading) return;
+  state.isLoading = true;
+  updateAnalyzeBtn();
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('errorState').style.display = 'none';
+  document.getElementById('resultArea').style.display = 'none';
+  const ls = document.getElementById('loadingState');
+  ls.style.display = 'flex';
+
+  const msgs = ['Analyzing your food…', 'Reading nutritional content…', 'Checking against your criteria…', 'Almost there…'];
+  let mi = 0;
+  const msgInterval = setInterval(() => {
+    mi = (mi + 1) % msgs.length;
+    document.getElementById('loadingMsg').textContent = msgs[mi];
+  }, 2200);
+
+  try {
+    const criteriaDesc = buildCriteriaDescription();
+    const isUrl = state.foodType === 'url';
+    const isImage = state.foodType === 'image';
+    const isPdf = state.foodType === 'pdf';
+
+    let userContent;
+    let systemPrompt = `You are Newt, a friendly nutritional assessment assistant. Analyze food inputs against provided nutritional criteria. 
+
+Respond ONLY with a valid JSON object, no markdown, no explanation outside the JSON.
+
+For a single meal or recipe, return:
+{
+  "type": "meal",
+  "title": "Name of the dish",
+  "summary": "2-sentence overview of how well this meal aligns with the criteria",
+  "score": { "satisfied": N, "total": N },
+  "checks": [
+    { "label": "Criteria item name", "pass": true/false, "note": "brief explanation" }
+  ]
+}
+
+For a full menu, return:
+{
+  "type": "menu",
+  "summary": "Brief overall note about this menu relative to the criteria",
+  "top3": [
+    { "rank": 1, "name": "Dish name", "reasoning": "Why this ranks highly", "tags": ["tag1","tag2"] },
+    { "rank": 2, "name": "Dish name", "reasoning": "Why this ranks second", "tags": ["tag1"] },
+    { "rank": 3, "name": "Dish name", "reasoning": "Why this ranks third", "tags": ["tag1","tag2"] }
+  ]
+}
+
+Be concise. Tags should be the specific criteria items satisfied.`;
+
+    if (isUrl) {
+      userContent = `Criteria: ${criteriaDesc}\n\nFood input (URL): ${state.foodData.url}\n\nFetch and analyze this URL. If it contains a single recipe or meal, use type "meal". If it's a menu with multiple dishes, use type "menu".`;
+    } else if (isImage) {
+      userContent = [
+        { type: 'image', source: { type: 'base64', media_type: state.foodData.mediaType, data: state.foodData.base64 } },
+        { type: 'text', text: `Criteria: ${criteriaDesc}\n\nAnalyze this food image. If it shows a single dish/meal, use type "meal". If it shows a menu, use type "menu".` }
+      ];
+    } else if (isPdf) {
+      userContent = [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: state.foodData.base64 } },
+        { type: 'text', text: `Criteria: ${criteriaDesc}\n\nAnalyze this PDF. If it's a single recipe, use type "meal". If it contains a menu with multiple dishes, use type "menu".` }
+      ];
+    }
+
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: systemPrompt, userContent, isUrl }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Server error ${res.status}: ${err}`);
+    }
+
+    const data = await res.json();
+    if (data.type === 'error') throw new Error(data.message || 'Unknown error from server');
+    renderResult(data);
+  } catch (err) {
+    document.getElementById('errorState').style.display = 'block';
+    document.getElementById('errorState').textContent = `Something went wrong: ${err.message}. Please check your connection and try again.`;
+  } finally {
+    clearInterval(msgInterval);
+    ls.style.display = 'none';
+    state.isLoading = false;
+    updateAnalyzeBtn();
+  }
+}
+
+function renderResult(data) {
+  const area = document.getElementById('resultArea');
+  area.style.display = 'block';
+
+  if (data.type === 'meal') {
+    const pct = Math.round((data.score.satisfied / data.score.total) * 100);
+    area.innerHTML = `
+      <div class="result-header">
+        <div class="result-title">${escHtml(data.title)}</div>
+        <div class="result-badge">Meal</div>
+      </div>
+      <div class="result-summary">${escHtml(data.summary)}</div>
+      <div class="score-wrap">
+        <div class="score-row">
+          <span>Criteria satisfied</span>
+          <span class="score-num">${data.score.satisfied} of ${data.score.total}</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" id="scoreBar" style="width:0%"></div></div>
+      </div>
+      <div class="checklist">
+        ${data.checks.map(c => `
+          <div class="check-row">
+            <div class="check-circle ${c.pass ? 'yes' : 'no'}">
+              ${c.pass
+                ? '<svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg>'
+                : '<svg viewBox="0 0 12 12"><line x1="3" y1="3" x2="9" y2="9"/><line x1="9" y1="3" x2="3" y2="9"/></svg>'}
+            </div>
+            <div>
+              <div class="check-text ${c.pass ? 'yes' : 'no'}">${escHtml(c.label)}</div>
+              ${c.note ? `<div class="check-note">${escHtml(c.note)}</div>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>`;
+    setTimeout(() => {
+      const bar = document.getElementById('scoreBar');
+      if (bar) bar.style.width = pct + '%';
+    }, 60);
+
+  } else if (data.type === 'menu') {
+    area.innerHTML = `
+      <div class="result-header">
+        <div class="result-title">Top picks for you</div>
+        <div class="result-badge">Menu</div>
+      </div>
+      <div class="result-summary">${escHtml(data.summary)}</div>
+      <div class="top3">
+        ${data.top3.map(item => `
+          <div class="top3-card">
+            <div class="top3-rank">#${item.rank} best match</div>
+            <div class="top3-name">${escHtml(item.name)}</div>
+            <div class="top3-reasoning">${escHtml(item.reasoning)}</div>
+            <div class="tag-row">${item.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    area.innerHTML = `<div class="result-summary">${escHtml(JSON.stringify(data))}</div>`;
+  }
+}
+
+function escHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+loadProfile();
+</script>
+</body>
+</html>
